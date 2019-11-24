@@ -171,3 +171,59 @@
 - End-to-and 音声変換ができた
 - ASR Multitask 学習が有効
 - 障碍者音声の明瞭化やノイズ除去という様々なタスクで有効性を確認
+---
+# Wav2vec: Unsupervised Pre-training for Speech Recognition
+
+## 柏木さん ソニーR&D　音声認識の雑音抑圧などを担当
+
+### 論文紹介
+
+- Wav2vecの目的：人手の特徴量抽出なしで完全なEnd-to-end ASRをやりたい
+- ラベルのないデータを利用できないか、というアプローチ
+- 古くはRBM、AutoEncoderに似た考え方
+
+#### Pretraining
+
+- 教師なしアプローチにより良いEmbedding空間を構築する
+  - 良い＝実験的に探索している（現状は）
+- Word2vec, BERT, ViLBERT、Speech2vec, Representation Learning with Contrastive Predictive Coding
+  - Speech2vec: 単語の意味に応じた空間を張ってくれる
+- BERTの影響は凄まじく、ASRにおいても重要となる技術
+
+#### CPC(Contrastive Predictive Coding)
+
+- 今までMFCCでやってた予測モデルがもっとうまくいったモデルなので
+- Encoder networkとEmbedding vectorを構造として持っている
+  - Encoder->１次元畳み込みネットワーク
+- 目的関数：
+  - 1項目は未来のEmbeddingとの相関を取るコスト関数
+  - 2項目は負例との相関が低いことを保証するコスト関数
+  - 未来何フレームまで予測するかはハイパラ
+- ASRでの利用
+  - Filter bankなどの特徴の代わりにまるっと置き換える
+
+#### 性能比較
+
+- WSJコーパスの一般的なASR実験：ちゃんとデータを増やすと性能が上がっていく
+- ラベル付きデータの差が少ないところで特に顕著に優れた性能が出せる
+- 1000時間くらい学習させればPERで12~14％くらいまで下げることができる
+
+### 続報：VQ-wav2vec
+
+- 量子化されたものをBERTに突っ込む
+- 10msのEmbeddingを推定することは簡単なため、マスクするフレームは複数にする
+- 特にTIMITでBERTいれた瞬間に一気に3ポイントくらい性能が良くなったりした
+
+### まとめ
+
+- PretrainingアプローチのASRの応用
+- Wav2vec: 教師なしデータをうまく利用して少量ラベルデータで高い性能を実現
+- VQ-wav2vec: BERTの生成モデリングは非常に強力でありASRで重要になると思料
+- 一方、手探り感が拭えないのと、マスク系の話でSpecAugmentなども巻き込みながら発展していくのではと予想している
+
+### QA
+
+- 他のBERTの例は？
+  - VideoとNLPを使ったマルチモーダルCVみたいな論文もある
+- 今回のNLPはテキストデータは全然関係なくて、未来の音声を予測するのみ
+- ビットレートに対するPERの比較のグラフは面白かった（圧縮率とは別の話なので注意）
